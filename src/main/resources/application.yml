@@ -1,6 +1,16 @@
 spring:
   application:
     name: payment-webhooks
+  datasource:
+    url: jdbc:h2:mem:webhooks;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
 
 server:
   port: 8080
