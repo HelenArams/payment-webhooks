@@ -12,6 +12,13 @@ spring:
   flyway:
     enabled: true
 
+webhooks:
+  retry:
+    # delay before retry n = backoff[n-1]; total attempts = max-attempts (first try + 8 retries)
+    backoff: 10s, 30s, 2m, 10m, 30m, 1h, 2h, 4h
+    max-attempts: 9
+    jitter: 0.2
+
 server:
   port: 8080
   shutdown: graceful
