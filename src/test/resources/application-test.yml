@@ -1,0 +1,12 @@
+webhooks:
+  dispatcher:
+    # tests drive DeliveryDispatcher.runOnce() by hand
+    enabled: false
+    timeout: 1s
+    connect-timeout: 1s
+    lease: 5s
+
+logging:
+  level:
+    com.helenaramyan.webhooks: INFO
+    org.hibernate.SQL: WARN

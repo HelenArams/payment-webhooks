@@ -18,6 +18,15 @@ webhooks:
     backoff: 10s, 30s, 2m, 10m, 30m, 1h, 2h, 4h
     max-attempts: 9
     jitter: 0.2
+  dispatcher:
+    enabled: true
+    poll-interval: 1s
+    batch-size: 50
+    concurrency: 4
+    timeout: 5s
+    connect-timeout: 2s
+    lease: 30s
+    user-agent: payment-webhooks/0.1
 
 server:
   port: 8080

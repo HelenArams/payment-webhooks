@@ -19,6 +19,8 @@ import java.util.UUID;
 @Table(name = "delivery")
 public class Delivery {
 
+    static final int MAX_ERROR_LENGTH = 500;
+
     @Id
     private UUID id;
 
@@ -40,10 +42,13 @@ public class Delivery {
     @Column(name = "next_attempt_at")
     private Instant nextAttemptAt;
 
+    @Column(name = "leased_until")
+    private Instant leasedUntil;
+
     @Column(name = "last_status_code")
     private Integer lastStatusCode;
 
-    @Column(name = "last_error", length = 500)
+    @Column(name = "last_error", length = MAX_ERROR_LENGTH)
     private String lastError;
 
     @Column(name = "created_at", nullable = false)
@@ -74,6 +79,49 @@ public class Delivery {
         return new Delivery(id, endpoint, event, now);
     }
 
+    /** Claims the delivery for an attempt: counts it and leases the row until {@code leasedUntil}. */
+    void beginAttempt(Instant now, Instant leasedUntil) {
+        this.attempts++;
+        this.leasedUntil = leasedUntil;
+        this.updatedAt = now;
+    }
+
+    void succeed(Instant now, int statusCode) {
+        this.status = DeliveryStatus.SUCCEEDED;
+        this.lastStatusCode = statusCode;
+        this.lastError = null;
+        this.nextAttemptAt = null;
+        this.leasedUntil = null;
+        this.completedAt = now;
+        this.updatedAt = now;
+    }
+
+    void scheduleRetry(Instant now, Instant nextAttemptAt, Integer statusCode, String error) {
+        this.status = DeliveryStatus.FAILED;
+        this.lastStatusCode = statusCode;
+        this.lastError = truncate(error);
+        this.nextAttemptAt = nextAttemptAt;
+        this.leasedUntil = null;
+        this.updatedAt = now;
+    }
+
+    void die(Instant now, Integer statusCode, String error) {
+        this.status = DeliveryStatus.DEAD;
+        this.lastStatusCode = statusCode;
+        this.lastError = truncate(error);
+        this.nextAttemptAt = null;
+        this.leasedUntil = null;
+        this.completedAt = now;
+        this.updatedAt = now;
+    }
+
+    private static String truncate(String error) {
+        if (error == null || error.length() <= MAX_ERROR_LENGTH) {
+            return error;
+        }
+        return error.substring(0, MAX_ERROR_LENGTH - 1) + "…";
+    }
+
     public UUID getId() {
         return id;
     }
@@ -96,6 +144,10 @@ public class Delivery {
 
     public Instant getNextAttemptAt() {
         return nextAttemptAt;
+    }
+
+    public Instant getLeasedUntil() {
+        return leasedUntil;
     }
 
     public Integer getLastStatusCode() {
