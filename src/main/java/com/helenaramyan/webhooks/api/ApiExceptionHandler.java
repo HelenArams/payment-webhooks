@@ -19,4 +19,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Not Found");
         return problem;
     }
+
+    @ExceptionHandler(ConflictException.class)
+    ProblemDetail conflict(ConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Conflict");
+        return problem;
+    }
 }

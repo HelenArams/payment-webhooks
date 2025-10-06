@@ -1,6 +1,7 @@
 package com.helenaramyan.webhooks.delivery;
 
 import com.helenaramyan.webhooks.api.ResourceNotFoundException;
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
@@ -13,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeliveryService {
 
     private final DeliveryRepository deliveries;
+    private final Clock clock;
 
-    public DeliveryService(DeliveryRepository deliveries) {
+    public DeliveryService(DeliveryRepository deliveries, Clock clock) {
         this.deliveries = deliveries;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -33,8 +36,17 @@ public class DeliveryService {
 
     @Transactional(readOnly = true)
     public DeliveryResponse get(UUID id) {
-        return deliveries.findById(id)
-                .map(DeliveryResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException("delivery", id));
+        return DeliveryResponse.from(load(id));
+    }
+
+    @Transactional
+    public DeliveryResponse replay(UUID id) {
+        Delivery delivery = load(id);
+        delivery.replay(clock.instant());
+        return DeliveryResponse.from(delivery);
+    }
+
+    private Delivery load(UUID id) {
+        return deliveries.findById(id).orElseThrow(() -> new ResourceNotFoundException("delivery", id));
     }
 }

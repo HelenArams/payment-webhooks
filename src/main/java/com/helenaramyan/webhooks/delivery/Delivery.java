@@ -1,5 +1,6 @@
 package com.helenaramyan.webhooks.delivery;
 
+import com.helenaramyan.webhooks.api.ConflictException;
 import com.helenaramyan.webhooks.endpoint.Endpoint;
 import com.helenaramyan.webhooks.event.PaymentEvent;
 import jakarta.persistence.Column;
@@ -112,6 +113,19 @@ public class Delivery {
         this.nextAttemptAt = null;
         this.leasedUntil = null;
         this.completedAt = now;
+        this.updatedAt = now;
+    }
+
+    /** Operator asked for another go at a dead delivery. Attempts start from zero again. */
+    void replay(Instant now) {
+        if (status != DeliveryStatus.DEAD) {
+            throw new ConflictException("delivery " + id + " is " + status + ", only DEAD deliveries can be replayed");
+        }
+        this.status = DeliveryStatus.PENDING;
+        this.attempts = 0;
+        this.nextAttemptAt = now;
+        this.leasedUntil = null;
+        this.completedAt = null;
         this.updatedAt = now;
     }
 
