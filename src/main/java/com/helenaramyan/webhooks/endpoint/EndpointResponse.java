@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
-public record EndpointResponse(UUID id, String url, Set<String> eventTypes, boolean enabled, Instant createdAt) {
+public record EndpointResponse(UUID id, String url, Set<String> eventTypes, boolean enabled, Instant createdAt, int consecutiveDead, Instant disabledAt) {
 
     static EndpointResponse from(Endpoint endpoint) {
         return new EndpointResponse(
@@ -13,6 +13,8 @@ public record EndpointResponse(UUID id, String url, Set<String> eventTypes, bool
                 endpoint.getUrl(),
                 new TreeSet<>(endpoint.getEventTypes()),
                 endpoint.isEnabled(),
-                endpoint.getCreatedAt());
+                endpoint.getCreatedAt(),
+                endpoint.getConsecutiveDead(),
+                endpoint.getDisabledAt());
     }
 }

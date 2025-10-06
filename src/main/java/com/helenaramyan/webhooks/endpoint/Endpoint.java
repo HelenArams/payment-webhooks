@@ -39,6 +39,12 @@ public class Endpoint {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "consecutive_dead", nullable = false)
+    private int consecutiveDead;
+
+    @Column(name = "disabled_at")
+    private Instant disabledAt;
+
     protected Endpoint() {
         // JPA
     }
@@ -69,6 +75,20 @@ public class Endpoint {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public void enable() {
+        enabled = true;
+        consecutiveDead = 0;
+        disabledAt = null;
+    }
+
+    public int getConsecutiveDead() {
+        return consecutiveDead;
+    }
+
+    public Instant getDisabledAt() {
+        return disabledAt;
     }
 
     public Set<String> getEventTypes() {

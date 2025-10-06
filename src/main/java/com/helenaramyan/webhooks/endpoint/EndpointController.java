@@ -42,4 +42,11 @@ public class EndpointController {
     public EndpointResponse get(@PathVariable UUID id) {
         return EndpointResponse.from(service.get(id));
     }
+
+    // re-enables an endpoint that was switched off after too many dead deliveries.
+    // deliveries queued before it was disabled are still there and go out on the next poll
+    @PostMapping("/{id}/enable")
+    public EndpointResponse enable(@PathVariable UUID id) {
+        return EndpointResponse.from(service.enable(id));
+    }
 }

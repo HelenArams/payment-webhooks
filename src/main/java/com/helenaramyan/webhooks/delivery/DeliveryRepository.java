@@ -26,6 +26,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery, UUID>, JpaSp
     @Query("""
             select d from Delivery d
             where d.status in :statuses
+              and d.endpoint.enabled = true
               and d.nextAttemptAt <= :now
               and (d.leasedUntil is null or d.leasedUntil <= :now)
             order by d.nextAttemptAt asc

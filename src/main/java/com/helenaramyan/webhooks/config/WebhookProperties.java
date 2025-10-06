@@ -15,7 +15,10 @@ import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = "webhooks")
 @Validated
-public record WebhookProperties(@Valid @DefaultValue Retry retry, @Valid @DefaultValue Dispatcher dispatcher) {
+public record WebhookProperties(
+        @Valid @DefaultValue Retry retry,
+        @Valid @DefaultValue Dispatcher dispatcher,
+        @Valid @DefaultValue Endpoints endpoints) {
 
     /**
      * @param backoff     delay before retry n is {@code backoff[n-1]}; the last entry repeats if
@@ -50,5 +53,9 @@ public record WebhookProperties(@Valid @DefaultValue Retry retry, @Valid @Defaul
             @DefaultValue("2s") @NotNull Duration connectTimeout,
             @DefaultValue("30s") @NotNull Duration lease,
             @DefaultValue("payment-webhooks/0.1") @NotBlank String userAgent) {
+    }
+
+    /** @param disableAfterDead consecutive DEAD deliveries after which an endpoint is switched off */
+    public record Endpoints(@DefaultValue("5") @Min(1) int disableAfterDead) {
     }
 }

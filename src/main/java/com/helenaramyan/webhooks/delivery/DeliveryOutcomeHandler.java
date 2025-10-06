@@ -1,5 +1,7 @@
 package com.helenaramyan.webhooks.delivery;
 
+import com.helenaramyan.webhooks.config.WebhookProperties;
+import com.helenaramyan.webhooks.endpoint.EndpointRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
@@ -16,13 +18,22 @@ public class DeliveryOutcomeHandler {
     private static final Logger log = LoggerFactory.getLogger(DeliveryOutcomeHandler.class);
 
     private final DeliveryRepository deliveries;
+    private final EndpointRepository endpoints;
     private final RetrySchedule schedule;
     private final Clock clock;
+    private final int disableAfterDead;
 
-    public DeliveryOutcomeHandler(DeliveryRepository deliveries, RetrySchedule schedule, Clock clock) {
+    public DeliveryOutcomeHandler(
+            DeliveryRepository deliveries,
+            EndpointRepository endpoints,
+            RetrySchedule schedule,
+            WebhookProperties properties,
+            Clock clock) {
         this.deliveries = deliveries;
+        this.endpoints = endpoints;
         this.schedule = schedule;
         this.clock = clock;
+        this.disableAfterDead = properties.endpoints().disableAfterDead();
     }
 
     @Transactional
@@ -33,6 +44,7 @@ public class DeliveryOutcomeHandler {
 
         if (result.succeeded()) {
             delivery.succeed(now, result.statusCode());
+            endpoints.resetConsecutiveDead(endpointId(delivery));
             log.info("delivery {} succeeded with {} after {} attempt(s) in {} ms",
                     delivery.getId(), result.statusCode(), delivery.getAttempts(), result.elapsed().toMillis());
             return delivery.getStatus();
@@ -46,7 +58,16 @@ public class DeliveryOutcomeHandler {
         } else {
             delivery.die(now, result.statusCode(), result.error());
             log.error("delivery {} dead after {} attempts ({})", delivery.getId(), delivery.getAttempts(), result.error());
+            UUID endpointId = endpointId(delivery);
+            endpoints.incrementConsecutiveDead(endpointId);
+            if (endpoints.disableIfOverThreshold(endpointId, disableAfterDead, now) == 1) {
+                log.error("endpoint {} disabled after {} consecutive dead deliveries", endpointId, disableAfterDead);
+            }
         }
         return delivery.getStatus();
+    }
+
+    private static UUID endpointId(Delivery delivery) {
+        return delivery.getEndpoint().getId(); // proxy id, no fetch
     }
 }

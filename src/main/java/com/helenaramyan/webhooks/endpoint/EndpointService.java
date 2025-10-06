@@ -32,6 +32,13 @@ public class EndpointService {
         return endpoints.findAllByOrderByCreatedAtAsc();
     }
 
+    @Transactional
+    public Endpoint enable(UUID id) {
+        Endpoint endpoint = get(id);
+        endpoint.enable();
+        return endpoint;
+    }
+
     @Transactional(readOnly = true)
     public Endpoint get(UUID id) {
         return endpoints.findById(id).orElseThrow(() -> new ResourceNotFoundException("endpoint", id));
