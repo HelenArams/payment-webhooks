@@ -1,0 +1,46 @@
+package com.helenaramyan.webhooks.support;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+
+/** A clock tests can move forward to make retries due without sleeping. */
+public final class MutableClock extends Clock {
+
+    private volatile Instant instant;
+    private final ZoneId zone;
+
+    public MutableClock(Instant start) {
+        this(start, ZoneOffset.UTC);
+    }
+
+    private MutableClock(Instant start, ZoneId zone) {
+        this.instant = start;
+        this.zone = zone;
+    }
+
+    public void advance(Duration duration) {
+        instant = instant.plus(duration);
+    }
+
+    public void set(Instant newInstant) {
+        instant = newInstant;
+    }
+
+    @Override
+    public ZoneId getZone() {
+        return zone;
+    }
+
+    @Override
+    public Clock withZone(ZoneId newZone) {
+        return new MutableClock(instant, newZone);
+    }
+
+    @Override
+    public Instant instant() {
+        return instant;
+    }
+}

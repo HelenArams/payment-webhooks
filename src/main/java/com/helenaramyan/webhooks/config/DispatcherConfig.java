@@ -34,15 +34,16 @@ public class DispatcherConfig {
     }
 
     /**
-     * Dedicated client for receivers: tight connect/read timeouts and, with the JDK client, no
-     * redirect following, so a 3xx counts as a failed attempt instead of a request to an
-     * unexpected host.
+     * Dedicated client for receivers: tight connect/read timeouts and no redirect following, so a
+     * 3xx counts as a failed attempt instead of a signed payload being re-posted to whatever host
+     * the receiver points at.
      */
     @Bean
     public RestClient webhookRestClient(RestClient.Builder builder, WebhookProperties properties) {
         ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
                 .withConnectTimeout(properties.dispatcher().connectTimeout())
-                .withReadTimeout(properties.dispatcher().timeout());
+                .withReadTimeout(properties.dispatcher().timeout())
+                .withRedirects(ClientHttpRequestFactorySettings.Redirects.DONT_FOLLOW);
         return builder
                 .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
                 .build();
