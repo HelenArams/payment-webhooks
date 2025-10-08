@@ -1,5 +1,7 @@
 package com.helenaramyan.webhooks.delivery;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Deliveries", description = "Delivery attempts, newest first")
 @RequestMapping("/v1/deliveries")
 @Validated
 public class DeliveryController {
@@ -36,6 +39,7 @@ public class DeliveryController {
         return service.get(id);
     }
 
+    @Operation(summary = "Replay a DEAD delivery", description = "Resets attempts and makes it due now. 409 for any other status.")
     @PostMapping("/{id}/replay")
     public DeliveryResponse replay(@PathVariable UUID id) {
         return service.replay(id);

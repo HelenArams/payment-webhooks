@@ -28,6 +28,13 @@ webhooks:
     lease: 30s
     user-agent: payment-webhooks/0.1
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  show-actuator: false
+
 server:
   port: 8080
   shutdown: graceful
