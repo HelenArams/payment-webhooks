@@ -34,6 +34,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, UUID>, JpaSp
     List<Delivery> findDue(
             @Param("statuses") Collection<DeliveryStatus> statuses, @Param("now") Instant now, Pageable page);
 
+    long countByStatus(DeliveryStatus status);
+
     @Query("select d from Delivery d join fetch d.endpoint join fetch d.event where d.id in :ids")
     List<Delivery> findAllWithEndpointAndEvent(@Param("ids") Collection<UUID> ids);
 }

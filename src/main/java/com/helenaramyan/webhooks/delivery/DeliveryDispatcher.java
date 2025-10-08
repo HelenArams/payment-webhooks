@@ -21,6 +21,7 @@ public class DeliveryDispatcher {
     private final DeliveryClaimer claimer;
     private final WebhookSender sender;
     private final DeliveryOutcomeHandler outcomes;
+    private final DeliveryMetrics metrics;
     private final ExecutorService executor;
     private final int batchSize;
 
@@ -28,11 +29,13 @@ public class DeliveryDispatcher {
             DeliveryClaimer claimer,
             WebhookSender sender,
             DeliveryOutcomeHandler outcomes,
+            DeliveryMetrics metrics,
             ExecutorService webhookSendExecutor,
             WebhookProperties properties) {
         this.claimer = claimer;
         this.sender = sender;
         this.outcomes = outcomes;
+        this.metrics = metrics;
         this.executor = webhookSendExecutor;
         this.batchSize = properties.dispatcher().batchSize();
     }
@@ -61,7 +64,8 @@ public class DeliveryDispatcher {
     private void deliver(DeliveryTask task) {
         try {
             SendResult result = sender.send(task);
-            outcomes.record(task.deliveryId(), result);
+            metrics.recordAttempt(result);
+            metrics.recordTransition(outcomes.record(task.deliveryId(), result));
         } catch (RuntimeException e) {
             // the lease expires and the delivery is picked up again; nothing else to do here
             log.error("delivery {} attempt {} crashed, will be retried after lease expiry",

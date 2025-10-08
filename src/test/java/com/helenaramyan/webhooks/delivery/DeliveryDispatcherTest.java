@@ -20,6 +20,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +65,9 @@ class DeliveryDispatcherTest {
 
     @Autowired
     private MutableClock clock;
+
+    @Autowired
+    private MeterRegistry meters;
 
     @BeforeAll
     static void startReceiver() {
@@ -213,6 +217,21 @@ class DeliveryDispatcherTest {
         assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.FAILED);
         assertThat(delivery.getLastStatusCode()).isNull();
         assertThat(delivery.getLastError()).isNotBlank();
+    }
+
+    @Test
+    void recordsAttemptAndTransitionMetrics() {
+        receiver.stubFor(post(urlEqualTo("/hooks")).willReturn(aResponse().withStatus(502)));
+        subscribe(receiver.baseUrl() + "/hooks");
+        emitCapture("pay_metrics");
+        double failedBefore = meters.counter("webhook.deliveries", "status", "failed").count();
+        long timedBefore = meters.timer("webhook.attempt.duration", "outcome", "http_error").count();
+
+        dispatcher.runOnce();
+
+        assertThat(meters.counter("webhook.deliveries", "status", "failed").count()).isEqualTo(failedBefore + 1);
+        assertThat(meters.timer("webhook.attempt.duration", "outcome", "http_error").count()).isEqualTo(timedBefore + 1);
+        assertThat(meters.get("webhook.backlog").tag("status", "failed").gauge().value()).isEqualTo(1.0);
     }
 
     @Test
