@@ -1,0 +1,28 @@
+# local playground: postgres + the service. not meant for anything beyond that
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: webhooks
+      POSTGRES_USER: webhooks
+      POSTGRES_PASSWORD: webhooks
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhooks"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_URL: jdbc:postgresql://postgres:5432/webhooks
+      DB_USER: webhooks
+      DB_PASSWORD: webhooks
+    ports:
+      - "8080:8080"
