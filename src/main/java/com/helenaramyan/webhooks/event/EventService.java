@@ -39,6 +39,7 @@ public class EventService {
      * single transaction. Nothing leaves the process here; the dispatcher picks deliveries up
      * asynchronously, so a slow or down receiver never affects the producer's request.
      */
+    // TODO: accept an Idempotency-Key so a producer retrying POST /v1/events doesn't fan out twice
     @Transactional
     public EventAcceptedResponse emit(EmitEventRequest request) {
         Instant now = clock.instant();
